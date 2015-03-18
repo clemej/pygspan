@@ -143,7 +143,6 @@ def genumerate(projection, right_most_path, dfs_codes, min_label, db):
 		h = history()
 		h.build(p)
 
-		# XXXjc: Bug here, pm_backware is always empty.
 		#print p.id, p.edge.fromn, p.edge.to, p.prev
 		pm_backward = get_backward(p, right_most_path, h, pm_backward, 
 						dfs_codes, db)
