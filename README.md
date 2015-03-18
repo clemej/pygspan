@@ -10,7 +10,10 @@ some scratch code I'm writing as an experiment to help me
 understand gspan better to write a C implementation.
 
 This code is currently BROKEN in that it, compared to the 
-original C++ implementation, it misses 
+original C++ implementation, it misses a few subgraphs.
+I'm not entirely sure why. It may have something to do
+with ordering of the DFS codes between C++ maps and unordered
+python dicts sorted by key.
 
 
 DO NOT USE.
