@@ -46,7 +46,7 @@ def dfs_code_backward_compare(a):
 #		return a.edge_label < b.edge_label
 
 def dfs_code_forward_compare(a):
-	return (a.fromn, a.edge_label, a.to_label)
+	return (-a.fromn, a.edge_label, a.to_label)
 
 #def dfs_code_forward_compare(a,b):
 #	if a.fromn != b.fromn:
@@ -114,51 +114,20 @@ def trim_infrequent_nodes(database, minsup):
 	print totrim
 	return database, frequent, totrim, freq_labels
 
-#	for g in database:
-#		new_ids = [None]*len(g.nodes)
-#		idx = 0
-#		while idx < len(g.nodes):
-#			if g.nodes[idx].label in totrim:
-#				print 'deleting node ', g.id, idx, g.nodes[idx].label
-#				del g.nodes[idx]
-#				continue
-#			new_ids[g.nodes[idx].id] = idx
-#			g.nodes[idx].id = idx
-#		
-#			idx += 1
-#
-#		g.nedges = 0
-#		for n in g.nodes:
-#			idx = 0
-#			while idx < len(n.edges):
-#				if new_ids[n.edges[idx].fromn] == None or \
-#					new_ids[n.edges[idx].to] == None:
-#					print 'deleting ', g.id, n.edges[idx].fromn, n.edges[idx].to, n.edges[idx].label
-#					del n.edges[idx]
-#					continue
-#
-#				n.edges[idx].fromn = new_ids[n.edges[idx].fromn]
-#				n.edges[idx].to = new_ids[n.edges[idx].to]
-#				idx += 1
-#
-#			g.nedges += idx
-#			
-#	return database, frequent, len(totrim), freq_labels
-
 
 def build_right_most_path(dfs_codes):
 	path = []
 	prev_id = -1
-	print list(reversed(list(enumerate(dfs_codes))))
+	#print list(reversed(list(enumerate(dfs_codes))))
 	for idx,c in reversed(list(enumerate(dfs_codes))):
 		if c.fromn < c.to and (len(path) == 0 or prev_id == c.to):
 			prev_id = c.fromn
 			path.append(idx)
-	print path
+	#print path
 	return path
 
 def genumerate(projection, right_most_path, dfs_codes, min_label, db):
-	print min_label, len(projection)
+	#print min_label, len(projection)
 	pm_backward = {}
 	pm_forward = {}
 
@@ -363,7 +332,7 @@ def judge_backwards(right_most_path, projection, min_dfs_codes, min_label, mingr
 					continue
 				if e.to not in h.has_node:
 					continue
-				if e.to == edge.fromn and (e.label > edge.label or (e.label == edge.label and e.label > to_node.label)):
+				if e.to == edge.fromn and (e.label > edge.label or (e.label == edge.label and last_node.label > to_node.label)):
 					from_id = min_dfs_codes[right_most_path[0]].to
 					to_id = min_dfs_codes[idx].fromn
 
@@ -451,8 +420,10 @@ def projection_min(projection, dfs_codes, min_dfs_codes, mingraph):
 	#print ret,pm_backward.keys()
 	if ret:
 		for pm in sorted(pm_backward, key=dfs_code_backward_compare):
+			print '--- ',pm
 			min_dfs_codes.append(pm)
 			if dfs_codes[len(min_dfs_codes)-1] != min_dfs_codes[-1]:
+				print '--- Killing me softly', dfs_codes, min_dfs_codes
 				return False
 
 			return projection_min(pm_backward[pm], dfs_codes, min_dfs_codes, mingraph)
@@ -503,6 +474,7 @@ def project(database, frequent_nodes, minsup, freq_labels):
 						projection_map[dfsc].append(pdfs)
 					else:
 						projection_map[dfsc] = [pdfs,]
+
 	for pm in sorted(projection_map, key=dfs_code_compare):
 		print pm
 	print '----'
