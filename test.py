@@ -12,6 +12,8 @@ if __name__ == '__main__':
 	minsup = int(1+(float(sys.argv[2])*len(database)))
 	print minsup
 	database, freq, trimmed, flabels = gspan.trim_infrequent_nodes(database, minsup)
-	print 'Trimmed ', trimmed, ' labels from the database'
+	database = fileio.read_file(sys.argv[1], frequent = freq)
+	print 'Trimmed ', len(trimmed), ' labels from the database'
+	print flabels
 	gspan.project(database, freq, minsup, flabels)
 
