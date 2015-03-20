@@ -1,13 +1,15 @@
 #
 # gspan.py : An non-Pythonic implementation of gSpan
-#		This is not how you would write gspan in python. It is
-#		some scratch code I'm writing as an experiment to help me
-#		understand gspan better to write a C implementation.
-#
-# This code is currently BROKEN in that the backwards search never seems to
-# work, so it misses condidate graphs. 
-#
-# DO NOT USE.
+# 
+# This is not how you would write gspan in python. It is
+# some scratch code I'm writing as an experiment to help me
+# understand gspan better to write a C implementation.
+# 
+# Author: John Clemens <john at deater.net>
+# Copyright (c) 2015 
+# 
+# This is a Python port of the C++ implementation of gSpan found
+# here: https://github.com/Jokeren/DataMining-gSpan
 #
 
 import graph
@@ -30,40 +32,12 @@ dfs_code = collections.namedtuple('dfs_code',
 #
 def dfs_code_compare(a):
 	return (a.from_label, a.edge_label, a.to_label)
-#	if a.from_label != b.from_label:
-#		return a.from_label < b.from_label
-#	else:
-#		if a.edge_label != b.edge_label:
-#			return a.edge_label < b.edge_label
-#		else:
-#			return a.to_label < b.to_label
 
 def dfs_code_backward_compare(a):
 	return (a.to, a.edge_label)
-#	if a.to != b.to:
-#		return a.to < b.to
-#	else:
-#		return a.edge_label < b.edge_label
 
 def dfs_code_forward_compare(a):
 	return (-a.fromn, a.edge_label, a.to_label)
-
-#def dfs_code_forward_compare(a,b):
-#	if a.fromn != b.fromn:
-#		if a.fromn > b.fromn:
-#			return 1
-#		else:
-#			return -1 
-#	if a.edge_label != b.edge_label:
-#		if a.edge_label < b.edge_label:
-#			return -1
-#		else:
-#			return 1
-#	if a.to_label < b.to_label:
-#		return -1
-#	else:
-#		return 1
-#
 
 # One class here to maintain the history information. 
 class history():
@@ -83,10 +57,7 @@ class history():
 		self.edges = list(reversed(self.edges))
 
 # 
-# This calculated the freqent labels, and then removes infrewuent ones from
-# the graphs directly instead of parsing them again as done in the C++ code. 
-#
-# XXXjc: This should be equivalent. re-verify
+# Calculates the freqent labels
 #
 def trim_infrequent_nodes(database, minsup):
 	totrim = []
@@ -114,7 +85,9 @@ def trim_infrequent_nodes(database, minsup):
 	print totrim
 	return database, frequent, totrim, freq_labels
 
-
+#
+# Build the right most path through the DFS codes 
+# 
 def build_right_most_path(dfs_codes):
 	path = []
 	prev_id = -1
@@ -126,6 +99,9 @@ def build_right_most_path(dfs_codes):
 	#print path
 	return path
 
+# 
+# Iterate through the projection to find potential next edges (?)
+#
 def genumerate(projection, right_most_path, dfs_codes, min_label, db):
 	#print min_label, len(projection)
 	pm_backward = {}
@@ -144,6 +120,9 @@ def genumerate(projection, right_most_path, dfs_codes, min_label, db):
 						dfs_codes, db, min_label)
 	return pm_backward, pm_forward
 
+#
+# Get initial edges from the graph to grow.
+#
 def get_forward_init(node, graph):
 	edges = []
 	
@@ -152,6 +131,9 @@ def get_forward_init(node, graph):
 			edges.append(e)
 	return edges
 
+#
+# Search to backward edges as potential next edges
+#
 def get_backward(prev_dfs, right_most_path, hist, pm_backward, dfs_codes, db):
 	last_edge = hist.edges[right_most_path[0]]
 	g = db[prev_dfs.id]
@@ -184,6 +166,9 @@ def get_backward(prev_dfs, right_most_path, hist, pm_backward, dfs_codes, db):
 	
 	return pm_backward
 
+#
+# Find the first forward edge as a next edge
+# 
 def get_first_forward(prev_dfs, right_most_path, hist, pm_forward, dfs_codes, db, min_label):
 	last_edge = hist.edges[right_most_path[0]]
 	g = db[prev_dfs.id]
@@ -206,7 +191,9 @@ def get_first_forward(prev_dfs, right_most_path, hist, pm_forward, dfs_codes, db
 			pm_forward[dfsc] = [pdfs,]
 
 	return pm_forward
-
+#
+# Append any other forward edges as potential next edges
+# 
 def get_other_forward(prev_dfs, right_most_path, hist, pm_forward, dfs_codes, db, min_label):
 	g = db[prev_dfs.id]
 
@@ -235,8 +222,9 @@ def get_other_forward(prev_dfs, right_most_path, hist, pm_forward, dfs_codes, db
 
 	return pm_forward
 
-
-
+#
+# Count how many graphs this projection shows up (?)
+#
 def count_support(projection):
 	prev_id = -1
 	size = 0
@@ -247,7 +235,9 @@ def count_support(projection):
 			size += 1
 	return size
 
-# Remember: DFS codes = (nodefrom, nodeto, fromlabel, edgelabel, tolabel)
+#
+# Build a graph for a given set of dfs codes. 
+#
 def build_graph(dfs_codes):
 	g = graph.Graph()
 
@@ -280,6 +270,9 @@ def build_graph(dfs_codes):
 
 	return g
 
+#
+# Check if a given DFS code is a minimum DFS code. Recursive.
+#
 def is_min(dfs_codes):
 
 	if len(dfs_codes) == 1:
@@ -334,7 +327,7 @@ def judge_backwards(right_most_path, projection, min_dfs_codes, min_label, mingr
 					continue
 				if e.to == edge.fromn and (e.label > edge.label or (e.label == edge.label and last_node.label > to_node.label)):
 					from_id = min_dfs_codes[right_most_path[0]].to
-					to_id = min_dfs_codes[idx].fromn
+					to_id = min_dfs_codes[right_most_path[idx]].fromn
 
 					dfsc = dfs_code(from_id, to_id, last_node.label, e.label, from_node.label)
 					pdfs = pre_dfs(0,e,j)
@@ -348,7 +341,10 @@ def judge_backwards(right_most_path, projection, min_dfs_codes, min_label, mingr
 			return True, pm_backwards
 
 	return False, pm_backwards
-			
+
+#
+# Used to 
+#
 def judge_forwards(right_most_path, projection, min_dfs_codes, min_label, mingraph):
 	
 	pm_forward = {}
@@ -361,15 +357,14 @@ def judge_forwards(right_most_path, projection, min_dfs_codes, min_label, mingra
 		last_node = mingraph.nodes[last_edge.to]
 
 		for e in last_node.edges:
-			edge = e
-			to_node = mingraph.nodes[edge.to]
+			to_node = mingraph.nodes[e.to]
 
-			if edge.to in h.has_node or to_node.label < min_label:
+			if e.to in h.has_node or to_node.label < min_label:
 				continue
 
 			to_id = min_dfs_codes[right_most_path[0]].to
-			dfsc = dfs_code(to_id, to_id+1, last_node.label, edge.label, to_node.label)
-			pdfs = pre_dfs(0,edge,p)
+			dfsc = dfs_code(to_id, to_id+1, last_node.label, e.label, to_node.label)
+			pdfs = pre_dfs(0,e,p)
 
 			if dfsc in pm_forward:
 				pm_forward[dfsc].append(pdfs)
@@ -411,7 +406,9 @@ def judge_forwards(right_most_path, projection, min_dfs_codes, min_label, mingra
 		return True, pm_forward
 	else:
 		return False, pm_forward
-
+#
+# Build a minimum projection (??) 
+#
 def projection_min(projection, dfs_codes, min_dfs_codes, mingraph):
 	right_most_path = build_right_most_path(min_dfs_codes)
 	min_label = min_dfs_codes[0].from_label
@@ -420,10 +417,9 @@ def projection_min(projection, dfs_codes, min_dfs_codes, mingraph):
 	#print ret,pm_backward.keys()
 	if ret:
 		for pm in sorted(pm_backward, key=dfs_code_backward_compare):
-			print '--- ',pm
+			#print '--- ',pm
 			min_dfs_codes.append(pm)
 			if dfs_codes[len(min_dfs_codes)-1] != min_dfs_codes[-1]:
-				print '--- Killing me softly', dfs_codes, min_dfs_codes
 				return False
 
 			return projection_min(pm_backward[pm], dfs_codes, min_dfs_codes, mingraph)
@@ -438,6 +434,9 @@ def projection_min(projection, dfs_codes, min_dfs_codes, mingraph):
 			return projection_min(pm_forward[pm], dfs_codes, min_dfs_codes,mingraph)
 	return True
 
+#
+# Draw a frequent subgraph with its support.
+# 
 def show_subgraph(dfs_codes, nsupport):
 	global __subgraph_count
 
@@ -446,13 +445,16 @@ def show_subgraph(dfs_codes, nsupport):
 	__subgraph_count += 1
 	g.gprint(nsupport)
 
-
+# 
+# Generate initial edges and start the mining process
+#
 def project(database, frequent_nodes, minsup, freq_labels):
 	global __subgraph_count
 	dfs_codes = []
 
 	projection_map = {}
-	
+        
+        # Print out all single-node graphs up front.	
 	for l in frequent_nodes:
 		print 't # %d * %d' % (__subgraph_count, freq_labels[l])
 		print 'v 0 %d\n' % (l,)
@@ -475,12 +477,12 @@ def project(database, frequent_nodes, minsup, freq_labels):
 					else:
 						projection_map[dfsc] = [pdfs,]
 
-	for pm in sorted(projection_map, key=dfs_code_compare):
-		print pm
-	print '----'
+	#for pm in sorted(projection_map, key=dfs_code_compare):
+	#	print pm
+	#print '----'
 	# Start Subgraph Mining
 	for pm in reversed(sorted(projection_map, key=dfs_code_compare)):
-		print pm
+		#print pm
 		# Partial pruning like apriori
 		if len(projection_map[pm]) < minsup:
 			continue
@@ -492,7 +494,9 @@ def project(database, frequent_nodes, minsup, freq_labels):
 
 		dfs_codes.pop()
 
+# 
 # recursive subgraph mining routine
+# 
 def mine_subgraph(database, projection, dfs_codes, minsup):
 	nsupport = count_support(projection) 
 	if nsupport < minsup:
@@ -509,13 +513,13 @@ def mine_subgraph(database, projection, dfs_codes, minsup):
 	pm_backward, pm_forward = genumerate(projection, right_most_path, dfs_codes, min_label, database)
 	#print pm_backward.keys()
 	
-	print '-----'
-	for pm in sorted(pm_backward, key=dfs_code_backward_compare):
-		print pm
-	print '-'
-	for pm in reversed(sorted(pm_forward, key=dfs_code_forward_compare)):
-		print pm
-	print '------'
+	#print '-----'
+	#for pm in sorted(pm_backward, key=dfs_code_backward_compare):
+	#	print pm
+	#print '-'
+	#for pm in reversed(sorted(pm_forward, key=dfs_code_forward_compare)):
+	#	print pm
+	#print '------'
 
 	for pm in sorted(pm_backward, key=dfs_code_backward_compare):
 		dfs_codes.append(pm)
@@ -528,5 +532,4 @@ def mine_subgraph(database, projection, dfs_codes, minsup):
 		dfs_codes.pop()
 
 	return dfs_codes
-
 	
