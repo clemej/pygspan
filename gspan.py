@@ -305,6 +305,9 @@ def is_min(dfs_codes):
 
 	return projection_min(projection_map[pm], dfs_codes, min_dfs_codes, mingraph)
 
+#
+# Check for any backwards edges (?)
+#
 def judge_backwards(right_most_path, projection, min_dfs_codes, min_label, mingraph):
 	pm_backwards = {}
 
@@ -343,7 +346,7 @@ def judge_backwards(right_most_path, projection, min_dfs_codes, min_label, mingr
 	return False, pm_backwards
 
 #
-# Used to 
+# check for any forward edges (?)
 #
 def judge_forwards(right_most_path, projection, min_dfs_codes, min_label, mingraph):
 	
@@ -406,6 +409,7 @@ def judge_forwards(right_most_path, projection, min_dfs_codes, min_label, mingra
 		return True, pm_forward
 	else:
 		return False, pm_forward
+
 #
 # Build a minimum projection (??) 
 #
